@@ -5,13 +5,16 @@ const Home = () => {
   const { currentUser } = useSelector((state) => state.user);
 
   return (
-    <div className=" bg-emerald-200 min-h-screen flex flex-col justify-center text-purple-500 min-w-full ml-7">
+    <div className=" bg-white/70 min-h-screen flex flex-col justify-center text-purple-500 min-w-full ml-7">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
         <section className="animate__animated">
-          
+        {!currentUser?.role ? (
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
             Welcome {currentUser.username}, Have A Nice Day
           </h2>
+        ):<h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+        Welcome Admin, Have A Nice Day
+      </h2>}
           <p className="text-base sm:text-lg lg:text-xl mb-8">
             Manage your customer relationships with ease and efficiency.
           </p>

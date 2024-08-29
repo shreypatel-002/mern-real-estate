@@ -5,10 +5,10 @@ import { useRef } from 'react';
 import { app } from '../FireBase';
 import {getDownloadURL, getStorage,ref , uploadBytesResumable} from 'firebase/storage' 
 import { useDispatch } from 'react-redux';
-import { updateUserSuccess,updateUserFailure,updateUserStart ,deleteUserStart,deleteUserSuccess,deleteUserFailure, signoutUserStart, resetState} from '../Redux/user/userSlice';
+import { updateUserSuccess,updateUserFailure,updateUserStart ,deleteUserStart,deleteUserSuccess,deleteUserFailure, signoutUserStart} from '../Redux/user/userSlice';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
 import { Button, Modal } from 'flowbite-react';
-
+import DeleteIcon from '@mui/icons-material/Delete';
 const Profile = () => {
   const {currentUser, loading,error} = useSelector((state)=> state.user);
   const [file, setfile]= useState(undefined);
@@ -56,6 +56,33 @@ const Profile = () => {
 
 };
 const handlesubmit = async(e)=>{
+  if(currentUser.role === 'admin'){
+    e.preventDefault();
+    try {
+      dispatch(updateUserStart())
+      const res = await fetch(`/api/user/updateAdmin/${currentUser._id}`,{
+       method:'POST',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+        body:JSON.stringify(FormData),
+      });
+      const data = await res.json();
+      if(data.success === false){
+        dispatch(updateUserFailure(data.message));
+         return;
+       }
+     dispatch(updateUserSuccess(data));
+     setupdatesuccess(true);
+     
+   }catch (error) {
+      dispatch(updateUserFailure(error.message));
+    }
+        
+    
+   }
+  
+   else
    e.preventDefault();
    try {
      dispatch(updateUserStart())
@@ -122,7 +149,7 @@ const handlesubmit = async(e)=>{
   }
 return (
 
-    <div className='p-5 max-w-xl md:ml-52 md:pl-40'>
+    <div className='p-5 max-w-lg md:ml-52  bg-white/50 '>
     <h1 className='text-3xl text-center font-semibold my-7  font-serif transition ease-in-out delay-100 hover:-translate-y-1 hover:scale-120 hover:text-orange-600 duration-200 '>Profile</h1>
 
     <form className='flex flex-col gap-4' onSubmit={handlesubmit}>
@@ -147,7 +174,7 @@ return (
           )}
         </p>
 
-      <input type='text' placeholder='username' className='border p-4 rounded-lg w-auto' id='username' defaultValue={currentUser.username} onChange={handlechange} />
+        {!currentUser?.role== 'admin' && (<input type='text' placeholder='username' className='border p-4 rounded-lg w-auto' id='username' defaultValue={currentUser.username} onChange={handlechange} />)}
 
       <input type='email' placeholder='Email' className='border p-4 rounded-lg w-auto' id='email' defaultValue={currentUser.email} onChange={handlechange} />
 
@@ -159,10 +186,10 @@ return (
  
     </form>
       <div className="flex justify-between mt-5">
-        <span onClick={() => setOpenModal(true)} className='text-red-600 font-medium cursor-pointer'>Delete account</span>
-        <span onClick={handlesignout} className='text-red-600 font-medium	cursor-pointer'>Sign-out</span>
+        <Button onClick={() => setOpenModal(true)} className='text-white font-medium cursor-pointer'><DeleteIcon/> Delete account</Button>
+        <Button onClick={handlesignout} className='text-white font-medium	cursor-pointer'>Sign-out</Button>
       </div>
-       <p className='text-green-500 mt-5'>{updatesuccess ? "user successfully updated": ""}</p>
+       <p className='text-white mt-5'>{updatesuccess ? "user successfully updated": ""}</p>
      {/* <Button onClick={() => setOpenModal(true)}>Toggle modal</Button> */}
      
 

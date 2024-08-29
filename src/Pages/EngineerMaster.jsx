@@ -24,16 +24,17 @@ const EngineerMaster = () => {
   const [isInsertModalOpen, setIsInsertModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAssignTaskModalOpen, setIsAssignTaskModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [selectedEngineer, setSelectedEngineer] = useState(null);
   const [selectedEngineerECode, setSelectedEngineerECode] = useState(null);
-  const [limit, setLimit] = useState(8);
+  const [limit, setLimit] = useState(6);
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [engineerToDelete, setEngineerToDelete] = useState(null); // Added state for engineer to delete
+  const [engineerToDelete, setEngineerToDelete] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const fetchData = async (searchQuery = '', filter = '', limit = 8, page = 1) => {
+  const fetchData = async (searchQuery = '', filter = '', limit = 6, page = 1) => {
     setLoading(true);
     try {
       const startIndex = (page - 1) * limit;
@@ -54,13 +55,13 @@ const EngineerMaster = () => {
     const filterFromUrl = urlParams.get('filter');
     const limitFromUrl = parseInt(urlParams.get('limit')) || limit;
     const pageFromUrl = parseInt(urlParams.get('page')) || currentPage;
-  
+
     setSearchTerm(searchTermFromUrl || '');
     setFilter(filterFromUrl || '');
     setLimit(limitFromUrl);
     setCurrentPage(pageFromUrl);
   }, [location.search]);
-  
+
   useEffect(() => {
     fetchData(searchTerm, filter, limit, currentPage);
   }, [searchTerm, filter, limit, currentPage]);
@@ -91,24 +92,24 @@ const EngineerMaster = () => {
   };
 
   const handleDeleteClick = (engineerId) => {
-    setEngineerToDelete(engineerId); // Set the engineer to delete
-    setIsModalOpen(true); // Open the confirmation modal
+    setEngineerToDelete(engineerId);
+    setIsModalOpen(true);
   };
 
   const confirmDelete = async () => {
     try {
       await axios.delete(`/api/Engineer/deleteEngineer/${engineerToDelete}`);
       setData(data.filter(engineer => engineer._id !== engineerToDelete));
-      setIsModalOpen(false); // Close the confirmation modal
+      setIsModalOpen(false);
     } catch (error) {
       console.error('Error deleting engineer:', error);
       setError(error);
-      setIsModalOpen(false); // Close the confirmation modal
+      setIsModalOpen(false);
     }
   };
 
   const handleSaveEditEngineer = (engineer) => {
-    if (!engineer || !engineer._id) return; // Ensure the engineer object is valid
+    if (!engineer || !engineer._id) return;
     setData(data.map(updatedEngineer => updatedEngineer._id === engineer._id ? engineer : updatedEngineer));
     setIsEditModalOpen(false);
   };
@@ -128,7 +129,7 @@ const EngineerMaster = () => {
 
   const handleViewTasks = (eCode) => {
     setSelectedEngineerECode(eCode);
-    setIsModalOpen(true);
+    setIsTaskModalOpen(true);
   };
 
   const handleCloseModal = () => {
@@ -150,13 +151,11 @@ const EngineerMaster = () => {
   const totalPages = Math.ceil(totalCount / limit);
 
   return (
-    <div className="flex justify-center min-h-screen sm:px-6 md:px-7 lg:px-8 bg-gray-100 w-full">
+    <div className="flex justify-center min-h-screen sm:px-6 md:px-7 lg:px-8 bg-white/40 w-full">
       <div className="w-full overflow-auto mt-6 items-center">
         <h2 className='col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 text-3xl font-bold text-center mb-6 font-serif '>Engineer Dashboard</h2>
         <div className="flex flex-row gap-5 items-center justify-between mb-5">
-          <form onSubmit={handleSearchSubmit} className="flex flex-row items-center gap-2 bg-white p-2 rounded shadow-md">
-            
-           
+          <form onSubmit={handleSearchSubmit} className="flex flex-row items-center gap-2 bg-white/30 p-2 rounded shadow-md">
             <input
               type="text"
               placeholder="Search.."
@@ -202,72 +201,54 @@ const EngineerMaster = () => {
             <CircularProgress />
           </div>
         ) : (
-          <>
-            <table className="min-w-full divide-y divide-gray-200 border shadow-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ECode
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone No
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Area
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tasks
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {data.map((engineer) => (
-                  <tr key={engineer._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{engineer.ECode}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{engineer.Name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{engineer.PhoneNo}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{engineer.Area}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <button
-                        className="bg-green-500 text-white py-1 px-2 rounded hover:bg-green-700"
-                        onClick={() => handleViewTasks(engineer.ECode)}
-                      >
-                        View Tasks
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <button
-                        className="bg-yellow-500 text-white py-1 px-2 rounded hover:bg-yellow-700 mr-2"
-                        onClick={() => handleEditClick(engineer)}
-                      >
-                        <EditIcon />
-                      </button>
-                      <button
-                        className="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-700"
-                        onClick={() => handleDeleteClick(engineer._id)}
-                      >
-                        <DeleteIcon />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="mt-4 flex justify-center">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map((engineer) => (
+            <div key={engineer._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+              <div className="flex justify-center mt-4"> {/* Added a flex container to center the image */}
+                <img
+                  className="h-32 w-32 object-cover rounded-full" // Added `rounded-full` and set a fixed height and width
+                  src={`${engineer.Profile}`}
+                  alt="Profile"
+                />
+              </div>
+              <div className="p-3"> {/* Reduced padding */}
+                <h3 className="text-lg font-bold mb-1 text-center">{engineer.Name}</h3> {/* Centered the text */}
+                <p className="text-gray-600 text-sm mb-1 text-center"><strong>Engineer Code:</strong> {engineer.ECode}</p> {/* Centered the text */}
+                <p className="text-gray-600 text-sm mb-1 text-center"><strong>Phone No:</strong> {engineer.PhoneNo}</p> {/* Centered the text */}
+                <p className="text-gray-600 text-sm mb-1 text-center"><strong>Area:</strong> {engineer.Area}</p> {/* Centered the text */}
+                <div className="flex justify-between items-center mt-2"> {/* Reduced margin */}
+                  <button
+                    className="bg-green-500 text-white py-1 px-2 rounded hover:bg-green-700 text-xs"
+                    onClick={() => handleViewTasks(engineer.ECode)}
+                  >
+                    View Tasks
+                  </button>
+                  <button
+                    className="bg-yellow-500 text-white py-1 px-2 rounded hover:bg-yellow-700 text-xs"
+                    onClick={() => handleEditClick(engineer)}
+                  >
+                    <EditIcon fontSize="small" /> {/* Adjust icon size */}
+                  </button>
+                  <button
+                    className="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-700 text-xs"
+                    onClick={() => handleDeleteClick(engineer._id)}
+                  >
+                    <DeleteIcon fontSize="small" /> {/* Adjust icon size */}
+                  </button>
+                </div>
+              </div>
             </div>
-          </>
+          ))}
+        </div>
+        
         )}
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </div>
       {isInsertModalOpen && (
         <InsertEngineerModal
@@ -312,9 +293,9 @@ const EngineerMaster = () => {
           </Modal.Body>
         </Modal>
       )}
-      {isModalOpen && selectedEngineerECode && (
+      {isTaskModalOpen && selectedEngineerECode && (
         <TaskList
-          isOpen={isModalOpen}
+          isOpen={isTaskModalOpen}
           onClose={handleCloseModal}
           eCode={selectedEngineerECode}
         />

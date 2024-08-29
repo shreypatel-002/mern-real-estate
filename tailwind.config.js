@@ -8,10 +8,13 @@ export default {
     flowbite.content(),
   ],
   theme: {
-    extend: {},
+       fontFamily: {
+        Montserrat: "Montserrat",
+    },
   },
   plugins: [
     flowbite.plugin(),
+    require("tailwind-scrollbar"),
    
   ],
 };

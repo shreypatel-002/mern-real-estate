@@ -15,7 +15,7 @@ const EditLeadModal = ({ lead, onClose, onSave }) => {
     callDate: lead.callDate ? formatDate(lead.callDate) : '',
   });
 
-  const [engineers, setEngineers] = useState([]);
+  const [Engineers, setEngineers] = useState([]);
   const [customers, setCustomers] = useState([]);
 
   useEffect(() => {
@@ -35,7 +35,7 @@ const EditLeadModal = ({ lead, onClose, onSave }) => {
         console.error('Error fetching customers:', error);
       }
     };
-
+    
     fetchEngineers();
     fetchCustomers();
   }, []);
@@ -69,7 +69,7 @@ const EditLeadModal = ({ lead, onClose, onSave }) => {
                <label className="block text-gray-700">Customer Name</label>
               <select
                 id="Name"
-                value={formData.Name}
+                value={formData.CustomerID}
                 onChange={handleChange}
                 required
                 className="mt-1 block w-full border border-gray-300 rounded-md p-2"
@@ -115,11 +115,17 @@ const EditLeadModal = ({ lead, onClose, onSave }) => {
                 className="mt-1 block w-full border border-gray-300 rounded-md p-2"
               >
                 <option value="">Select</option>
-                <option value="Billing">Billing</option>
-                <option value="Technical Support">Technical Support</option>
-                <option value="Account Management">Account Management</option>
-                <option value="General Inquiry">General Inquiry</option>
-                <option value="Other">Other</option>
+            <option value="Billing">Billing</option>
+            <option value="Technical Support">Technical Support</option>
+            <option value="Account Management">Account Management</option>
+            <option value="Product Issues">Product Issues</option>
+            <option value="Service Issues">Service Issues</option>
+            <option value="Shipping and Delivery">Shipping and Delivery</option>
+            <option value="Customer Service">Customer Service</option>
+            <option value="Warranty and Guarantee">Warranty and Guarantee</option>
+            <option value="Feedback and Suggestions">Feedback and Suggestions</option>
+            <option value="Legal and Compliance">Legal and Compliance</option>
+            <option value="Miscellaneous">Miscellaneous</option>
               </select>
             </div>
             <div className="mb-4 col-span-2">
@@ -164,7 +170,7 @@ const EditLeadModal = ({ lead, onClose, onSave }) => {
                 className="mt-1 block w-full border border-gray-300 rounded-md p-2"
               >
                 <option value="">Select</option>
-                {engineers.map((engineer) => (
+                {Engineers.map((engineer) => (
                   <option key={engineer._id} value={engineer._id}>
                     {engineer.Name}
                   </option>
@@ -187,23 +193,7 @@ const EditLeadModal = ({ lead, onClose, onSave }) => {
                 <option value="Critical">Critical</option>
               </select>
             </div>
-            <div className="mb-4">
-              <label className="block text-gray-700">Customer Satisfaction</label>
-              <select
-                id="customerSatisfaction"
-                value={formData.customerSatisfaction}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-              >
-                <option value="">Select</option>
-                <option value="Very Satisfied">Very Satisfied</option>
-                <option value="Satisfied">Satisfied</option>
-                <option value="Neutral">Neutral</option>
-                <option value="Dissatisfied">Dissatisfied</option>
-                <option value="Very Dissatisfied">Very Dissatisfied</option>
-              </select>
-            </div>
+      
           </div>
           <div className="flex justify-end mt-4">
             <button

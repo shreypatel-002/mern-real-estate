@@ -80,7 +80,7 @@ const AssignTaskModal = ({ isVisible, onClose, onSave }) => {
           </Select>
         </Form.Item>
         <Form.Item
-          name="customer"
+          name="Customer"
           label="Assigned Customer"
           rules={[{ required: true, message: 'Please select a customer!' }]}
         >

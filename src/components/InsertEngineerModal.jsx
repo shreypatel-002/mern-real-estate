@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { app } from '../FireBase';
+import { useSelector } from 'react-redux';
 
 const InsertCustomerModal = ({ onClose, onSave }) => {
+  const { currentUser } = useSelector((state) => state.user);
+  const [file, setFile] = useState(undefined);
+  const [fileUploadError, setFileUploadError] = useState(false);
+  const [filePer, setFilePer] = useState(0);
+  const [formData, setFormData] = useState({});
+
   const [ecode, setEcode] = useState('');
   const [name, setName] = useState('');
   const [phoneNo, setPhoneNo] = useState('');
@@ -10,20 +19,51 @@ const InsertCustomerModal = ({ onClose, onSave }) => {
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
 
+  const fileRef = useRef(null);
+
+  useEffect(() => {
+    if (file) {
+      handleFileUpload(file);
+    }
+  }, [file]);
+
+  const handleFileUpload = (file) => {
+    const storage = getStorage(app);
+    const fileName = new Date().getTime() + file.name;
+    const storageRef = ref(storage, fileName);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setFilePer(Math.round(progress));
+      },
+      (error) => {
+        setFileUploadError(true);
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) =>
+          setFormData({ ...formData, Profile: downloadURL })
+        );
+      }
+    );
+  };
+
   const validate = () => {
     const newErrors = {};
-
+    
     if (!ecode) newErrors.ecode = 'Ecode is required';
-    else if (!/^[0-9]{3}$/.test(ecode)) newErrors.ecode = 'Ecode must be digit only with 3 characters long ';
+    else if (!/^\d{3}$/.test(ecode)) newErrors.ecode = 'Ecode must be exactly 3 characters long (only digits are allowed)';
 
     if (!name) newErrors.name = 'Name is required';
-    else if (!/^[A-Za-z]{3,40}$/.test(name)) newErrors.name = 'Name  only contain letters ';
+    else if (!/^[a-zA-Z\s]{5,30}$/.test(name)) newErrors.name = 'Name must be 5-30 letters long and contain only letters and spaces';
 
     if (!email) newErrors.email = 'Email is required';
     else if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/.test(email)) newErrors.email = 'Invalid email format';
 
     if (!phoneNo) newErrors.phoneNo = 'Phone number is required';
-    else if (!/^[0-9]{10}$/.test(phoneNo)) newErrors.phoneNo = 'Phone number must be exactly 10 digits';
+    else if (!/^\d{10}$/.test(phoneNo)) newErrors.phoneNo = 'Phone number must be exactly 10 digits';
 
     if (!area) newErrors.area = 'Area is required';
 
@@ -39,15 +79,22 @@ const InsertCustomerModal = ({ onClose, onSave }) => {
     }
 
     try {
-      const response = await axios.post('/api/Engineer/AddEngineer', { Name: name, email, PhoneNo: phoneNo, ECode: ecode, Area: area });
+      const response = await axios.post('/api/Engineer/AddEngineer', {
+        Name: name,
+        email,
+        PhoneNo: phoneNo,
+        ECode: ecode,
+        Area: area,
+        Profile: formData.Profile,
+      });
       onSave(response.data);
       onClose();
-      toast.success('Engineer added successfully!');
     } catch (error) {
-      console.error('Error inserting Engineer:', error);
-      toast.error('Error: ' + (error.response?.data?.message || error.message), {
-        position: "bottom-right"
-      });
+      if (error.response && error.response.status === 409) {
+        setErrors({ duplicate: 'Engineer with this ecode already exists.' });
+      } else {
+        console.error('Error inserting Engineer:', error);
+      }
     }
   };
 
@@ -56,6 +103,33 @@ const InsertCustomerModal = ({ onClose, onSave }) => {
       <div className="bg-white p-5 rounded-lg shadow-lg">
         <h2 className="text-xl font-bold mb-4">Insert Engineer</h2>
         <form onSubmit={handleSubmit}>
+          <input
+            onChange={(e) => setFile(e.target.files[0])}
+            type="file"
+            ref={fileRef}
+            hidden
+            accept="image/*"
+            required
+          />
+          <img
+            onClick={() => fileRef.current.click()}
+            className="rounded-full h-24 w-24 object-cover cursor-pointer self-center"
+            src={formData.Profile || currentUser.Profile}
+            alt="ProfilePic"
+          />
+          <p className="text-sm self-center">
+            {fileUploadError ? (
+              <span className="text-red-700">
+                Error Image upload (image must be less than 5 MB)
+              </span>
+            ) : filePer > 0 && filePer < 100 ? (
+              <span className="text-slate-700">{`Uploading ${filePer}%`}</span>
+            ) : filePer === 100 ? (
+              <span className="text-green-700">Image successfully uploaded!</span>
+            ) : (
+              ''
+            )}
+          </p>
           <div className="mb-4">
             <label className="block text-gray-700">Ecode</label>
             <input
@@ -67,6 +141,7 @@ const InsertCustomerModal = ({ onClose, onSave }) => {
               required
             />
             {errors.ecode && <p className="text-red-500 text-sm mt-1">{errors.ecode}</p>}
+            {errors.duplicate && <p className="text-red-500 text-sm mt-1">{errors.duplicate}</p>}
           </div>
           <div className="mb-4">
             <label className="block text-gray-700">Name</label>
@@ -120,7 +195,11 @@ const InsertCustomerModal = ({ onClose, onSave }) => {
             {errors.area && <p className="text-red-500 text-sm mt-1">{errors.area}</p>}
           </div>
           <div className="flex justify-end">
-            <button type="button" onClick={onClose} className="mr-2 px-4 py-2 bg-gray-300 rounded">
+            <button
+              type="button"
+              onClick={onClose}
+              className="mr-2 px-4 py-2 bg-gray-300 rounded"
+            >
               Cancel
             </button>
             <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">

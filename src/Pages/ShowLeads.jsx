@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import EditLeadModal from '../components/EditLeadModel';
-import { Pagination } from 'flowbite-react';
+import { Button, Modal, Pagination } from 'flowbite-react';
+import { HiOutlineExclamationCircle } from 'react-icons/hi';
 
 const ShowLeads = () => {
   const [data, setData] = useState([]);
@@ -10,10 +11,12 @@ const ShowLeads = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedLead, setSelectedLead] = useState(null);
+  const [leadToDelete, setleadToDelete] = useState(null); // Added state for engineer to delete
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,6 +42,21 @@ const ShowLeads = () => {
 
   const handleEditClick = (lead) => {
     setSelectedLead(lead);
+  };
+  const handleDeleteClick =(leadId)=>{
+    setleadToDelete(leadId)
+    setIsModalOpen(true); // Open the confirmation modal
+  }
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`/api/Lead/delete/${leadToDelete}`);
+      setData(data.filter(lead => lead._id !== leadToDelete));
+      setIsModalOpen(false); // Close the confirmation modal
+    } catch (error) {
+      console.error('Error deleting engineer:', error);
+      setError(error);
+      setIsModalOpen(false); // Close the confirmation modal
+    }
   };
 
   if (loading) {
@@ -67,30 +85,31 @@ const ShowLeads = () => {
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
   return (
-    <div className="flex flex-col justify-center min-h-screen px-4 sm:px-6 md:px-7 lg:px-8 mt-1">
-      <div className="w-full overflow-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+    <div className="flex flex-col min-h-screen px-4 sm:px-6 md:px-7 lg:px-8 mt-1">
+      <div className="w-full overflow-auto ">
+      <h2 className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 text-3xl font-bold text-center mb-6 font-serif">Lead Records</h2>
+        <table className="min-w-full divide-y divide-gray-200 ">
+          <thead className="bg-white/90">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">tracking id</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone No</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issue Category</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Call Date</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority Level</th>
+              {/* <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority Level</th> */}
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Engineer Name</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-gray-200 bg-white/90">
             {currentItems.map((item) => (
               <tr key={item._id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getCustomerName(item.Name)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getCustomerName(item.CustomerID)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.LeadID}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.PhoneNo}</td>
+               
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.issueCategory}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.callDate).toLocaleDateString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.priorityLevel}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getEngineerName(item.supportAgentName)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button 
@@ -101,6 +120,7 @@ const ShowLeads = () => {
                   </button>
                   <button 
                     className="text-red-500 hover:underline" 
+                    onClick={()=>handleDeleteClick(item._id)}
                   >
                     Delete
                   </button>
@@ -129,6 +149,27 @@ const ShowLeads = () => {
           }}
         />
       }
+       {isModalOpen && (
+        <Modal show={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          <Modal.Header />
+          <Modal.Body>
+            <div className="text-center">
+              <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+              <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                Are you sure you want to delete this lead ?
+              </h3>
+              <div className="flex justify-center gap-4">
+                <Button color="failure" onClick={confirmDelete}>
+                  Yes, I'm sure
+                </Button>
+                <Button color="gray" onClick={() => setIsModalOpen(false)}>
+                  No, cancel
+                </Button>
+              </div>
+            </div>
+          </Modal.Body>
+        </Modal>
+      )}
     </div>
   );
 };

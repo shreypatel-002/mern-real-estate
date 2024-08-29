@@ -2,7 +2,7 @@ import React from 'react'
 
 const About = () => {
   return (
-    <section className="max-w-7xl mx-auto py-16 px-6 lg:px-8 bg-gray-200 text-gray-500 min-h-screen ">
+    <section className="max-w-7xl mx-auto py-16 px-6 lg:px-8 bg-white/70 text-gray-500 min-h-screen ">
     <div className="text-center">
       <h1 className="text-4xl font-extrabold text-indigo-600 sm:text-5xl">
         Welcome to Our CRM
